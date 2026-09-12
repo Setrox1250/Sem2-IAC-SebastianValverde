@@ -208,3 +208,66 @@ bd-1    | 2026-09-12 17:25:41.840 UTC [71] LOG:  checkpoint complete: wrote 42 b
 Para mayor ilustración se hizo un fix pequeño donde se manda un mensaje personalizado a cada api usando el .env con las variables MESSAGE1,MESSAGE2,MESSAGE3.
 
 ![alt text](imagenes/curl3apisperso.png)
+
+## Redes y volumenes
+
+
+## Volumenes en la bd
+
+Se hizo un añadido en la configuración del servicio de postgre dentro del docker.compose.yaml para indicar la ubicación del volumen de la bd.
+
+![alt text](imagenes/bdVolumen.png)
+
+se vuelve a levantar el entorno con el nuevo build usando
+
+```bash
+docker compose -f docker.compose.yaml up --build
+```
+
+y se verifica que los volumnes se han creado usando 
+
+```bash
+docker volume ls
+```
+![alt text](imagenes/volumenDocker.png)
+
+y para una salida más detallada se emplea
+
+```bash
+docker volume inspect sem2-iac-sebastianvalverde_postgres_data
+```
+
+y se obtiene la siguiente salida
+
+![alt text](imagenes/VolumenDetalle.png)
+
+para hacer la prueba más interesante se creó una base de datos dentro del contenedor de postgres y se le insertó un usuario a nombre de "Sebastian Valverde".
+
+```bash
+# Crear tabla de prueba
+docker compose -f docker.compose.yaml exec bd psql -U postgres -c "CREATE TABLE usuarios (id SERIAL PRIMARY KEY, nombre VARCHAR(50));"
+
+# Insertar un registro
+docker compose -f docker.compose.yaml exec bd psql -U postgres -c "INSERT INTO usuarios (nombre) VALUES ('Sebastian Valverde');"
+
+```
+
+![alt text](imagenes/VerificaciónTablaUsuario.png)
+
+Para comprobar la persistencia debemos los contenedores existentes y volver a levantar los mismos.
+
+```bash
+# Detener los contenedores
+docker compose -f docker.compose.yaml down
+
+# Verificar inexistencia de los contenedores
+docker compose -f docker.compose.yaml ps -a
+
+# Levantamos los contenedores
+docker compose -f docker.compose.yaml up -d
+```
+
+![alt text](imagenes/dockerComposeps.png)
+
+
+
