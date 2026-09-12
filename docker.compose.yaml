@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+
+  bd:
+    image: 'postgres'
+    environment:
+      - 'POSTGRES_PASSWORD=${BD_PASSWD}'
