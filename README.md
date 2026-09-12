@@ -9,6 +9,10 @@ Primero preparamos el entorno básico creando el archivo `.env` y las variables 
 Por ser la primera vez, se debe construir la imagen de la API desde el `Dockerfile` (realiza `npm install` usando `package.json`), por lo que se levanta con:
 
 ```bash
+# Copiar las variables de entorno de ejemplo (ajustar los valores dentro de .env)
+cp .env.example .env
+
+# Construir y levantar
 docker compose -f docker.compose.yaml up --build
 ```
 
@@ -157,16 +161,17 @@ docker compose -f docker.compose.yaml ps -a
 docker compose -f docker.compose.yaml up -d
 ```
 
-![Estado de contenedores con Docker Compose](imagenes/08-docker-compose-ps.png)
-
 Finalmente, ejecutamos la consulta a la base de datos comprobando que el registro de `"Sebastian Valverde"` persiste:
 
 ```bash
 docker compose -f docker.compose.yaml exec bd psql -U postgres -c "SELECT * FROM usuarios;"
 ```
 
+![Estado de contenedores con Docker Compose](imagenes/08-docker-compose-ps.png)
+
 ### Commit: 
 
 ```text
 feat(compose): agregar volumen persistente a la bd
 ```
+
