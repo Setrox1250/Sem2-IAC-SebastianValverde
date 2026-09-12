@@ -3,6 +3,14 @@ services:
     build: .
     ports:
       - "3000:3000"
+  api2:
+    build: .
+    ports:
+      - "3001:3000"
+  api3:
+    build: .
+    ports:
+      - "3002:3000"
 
   bd:
     image: 'postgres'
