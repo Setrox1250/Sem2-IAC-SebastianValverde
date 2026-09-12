@@ -205,3 +205,6 @@ bd-1    | 2026-09-12 17:25:37.604 UTC [71] LOG:  checkpoint starting: time
 bd-1    | 2026-09-12 17:25:41.840 UTC [71] LOG:  checkpoint complete: wrote 42 buffers (0.3%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=4.209 s, sync=0.006 s, total=4.236 s; sync files=11, longest=0.002 s, average=0.001 s; distance=325 kB, estimate=325 kB; lsn=0/17B3160, redo lsn=0/17B3108
 ```
 
+Para mayor ilustración se hizo un fix pequeño donde se manda un mensaje personalizado a cada api usando el .env con las variables MESSAGE1,MESSAGE2,MESSAGE3.
+
+![alt text](imagenes/curl3apisperso.png)
