@@ -1,31 +1,40 @@
 # Lab02 
 ### Sebastian Valverde Cedron - 000291195
 
-## Introduccion
-Primero preparamos el entorno básico creando el .env y las variables de entorno necesarias para la base de datos y para el mensaje de la api. También tenemos los archivos dockerfile y docker-compose.yaml. con la configuración mínima necesaria para empezar a testear el uso de docker con un levantamiento de prueba.
+## Introducción
+Primero preparamos el entorno básico creando el archivo `.env` y las variables de entorno necesarias para la base de datos y para el mensaje de la API. También contamos con los archivos `Dockerfile` y `docker.compose.yaml` con la configuración mínima necesaria para empezar a probar el uso de Docker con un levantamiento de prueba.
 
-## instruccion
+## Instrucciones de ejecución
 
-para inicializar el contenedor base podemos usar:
+Por ser la primera vez, se debe construir la imagen de la API desde el `Dockerfile` (realiza `npm install` usando `package.json`), por lo que se levanta con:
+
+```bash
+docker compose -f docker.compose.yaml up --build
+```
+
+> **Importante:** la imagen de la API se construye localmente a partir del `Dockerfile`. Por eso `package.json` y `package-lock.json` forman parte del repositorio: sin ellos el build fallaría. `node_modules` está ignorado en `.gitignore` y se regenera con `npm install`.
+
+Si la imagen ya está construida, se puede iniciar sin reconstruir:
+
 ```bash
 docker compose -f docker.compose.yaml up 
 ```
-donde -f le dice a docker compose que use el archivo docker.compose.yaml para configurar los servicios. 
+Donde `-f` le indica a Docker Compose que utilice el archivo específico `docker.compose.yaml` para configurar los servicios. 
 
-salida del primer docker compose de prueba:
+Salida del primer Docker Compose de prueba:
 
 ![Salida inicial Docker Compose](imagenes/01-docker-compose-up-inicial.png)
 
-### commit: 
+### Commit: 
 
-```
+```text
 build(docker):agregar archivos base y variables de entorno como configuración inicial
 ```
 
-Una vez se verifica el correcto funcionamiento de docker y una bd, se puede proceder a crear la arquitectura de múltiples contenedores que se encargaran de levantar la api 3 veces + el contenedor de la bd.
+Una vez verificado el correcto funcionamiento de Docker y la base de datos, se procede a crear la arquitectura de múltiples contenedores encargada de levantar la API 3 veces más el contenedor de la base de datos.
 
-docker.compose.yaml
-```
+`docker.compose.yaml`:
+```yaml
 services:
   api:
     build: .
@@ -46,94 +55,118 @@ services:
       - 'POSTGRES_PASSWORD=${BD_PASSWD}'
 ```
 
-resultado de logs en docker de 3 llamados:
+Resultado de logs en Docker de las 3 llamadas:
 
 ![Logs de respuesta de las 3 APIs](imagenes/02-curl-3-apis.png)
 
-### commit: 
+### Commit: 
 
-```
+```text
 feat(compose): escalar api a 3 replicas con bd
 ```
 
-Para mayor ilustración se hizo un fix pequeño donde se manda un mensaje personalizado a cada api usando el .env con las variables MESSAGE1,MESSAGE2,MESSAGE3.
+Para mayor ilustración se realizó un pequeño ajuste enviando un mensaje personalizado a cada API usando el archivo `.env` con las variables `MESSAGE1`, `MESSAGE2` y `MESSAGE3`.
 
 ![Llamado a APIs con mensaje personalizado](imagenes/03-curl-3-apis-personalizado.png)
 
-### commit: 
+### Commit: 
 
-```
+```text
 fix(compose): asignar mensaje personalizado a cada api
 ```
 
-## Redes y volumenes
+---
 
-tipos de redes:
+## Redes y Volúmenes en Docker
 
-tipos de volumen:
+### Tipos de Redes (Drivers de Red en Docker)
+1. **Bridge (por defecto):** Es la red privada predeterminada que crea Docker en un host. Permite que los contenedores en el mismo host se comuniquen entre sí aislándolos de la red externa.
+2. **Host:** Elimina el aislamiento de red entre el contenedor y el host. El contenedor comparte directamente las interfaces e IP del sistema anfitrión.
+3. **Overlay:** Permite conectar múltiples demonios de Docker en distintos hosts físicos o virtuales, siendo fundamental para arquitecturas distribuidas (ej. Docker Swarm / Kubernetes).
+4. **Macvlan / Ipvlan:** Asigna una dirección MAC/IP física a un contenedor, haciendo que parezca un dispositivo físico independiente conectado a la red local.
+5. **None:** Desactiva por completo la pila de red en el contenedor, dejándolo totalmente aislado.
 
-## Volumenes en la bd
+### Tipos de Volúmenes (Mecanismos de Almacenamiento en Docker)
+1. **Volúmenes Administrados (Named Volumes):** Almacenados en una zona administrada directamente por Docker (`/var/lib/docker/volumes/`). Son independientes del ciclo de vida del contenedor, tienen un nombre explícito, son persistentes y representan la mejor opción para bases de datos.
+2. **Volúmenes Anónimos (Anonymous Volumes):** Similares a los nombrados, pero creados sin especificar un nombre (ej. `- /var/lib/postgresql`). Docker les asigna un hash aleatorio largo. Aunque persisten los datos al reiniciar el contenedor, son difíciles de rastrear, reutilizar o administrar.
+3. **Montajes Vinculados (Bind Mounts):** Mapean un archivo o directorio específico del sistema de archivos del host directamente al contenedor (ej. `./src/api:/app`). Son ideales para entornos de desarrollo en tiempo real.
+4. **Montajes en Memoria (tmpfs Mounts):** Almacenan datos únicamente en la memoria RAM del host (no en disco), siendo temporales y extremadamente rápidos.
 
-Se hizo un añadido en la configuración del servicio de postgre dentro del docker.compose.yaml para indicar la ubicación del volumen de la bd.
+
+---
+
+## Volúmenes en la BD
+
+Se añadió la configuración del volumen dentro de `docker.compose.yaml` para definir el almacenamiento de PostgreSQL.
 
 ![Configuración del Volumen Postgres](imagenes/04-docker-compose-volumen-bd.png)
 
-se vuelve a levantar el entorno con el nuevo build usando
+### Sustentación de la Elección del Volumen
+Se eligió utilizar un **Named Volume (Volumen Administrado)** nombrado `postgres_data` mapeado a la ruta `/var/lib/postgresql` del contenedor por las siguientes razones:
+- **Persistencia de Datos Independiente:** La información de la base de datos se conserva intacta aunque el contenedor sea eliminado (`docker compose down`).
+- **Gestión Automatizada por Docker:** Al ser un volumen administrado por el motor de Docker, evita problemas de permisos de sistema operativo local y garantiza compatibilidad multiplataforma.
+- **Rendimiento e Integridad:** Proporciona un rendimiento óptimo de I/O para motores SQL como PostgreSQL evitando cierres inesperados por bloqueo de archivos en el host.
+
+---
+
+### Verificación de Creación y Persistencia
+
+Se vuelve a levantar el entorno con el nuevo build usando:
 
 ```bash
 docker compose -f docker.compose.yaml up --build
 ```
 
-y se verifica que los volumnes se han creado usando 
+Y se verifica la creación del volumen administrado:
 
 ```bash
 docker volume ls
 ```
 ![Listado de volúmenes creados](imagenes/05-docker-volume-ls.png)
 
-y para una salida más detallada se emplea
+Para obtener una salida más detallada del volumen creado:
 
 ```bash
 docker volume inspect sem2-iac-sebastianvalverde_postgres_data
 ```
 
-y se obtiene la siguiente salida
-
 ![Detalle del volumen creado](imagenes/06-docker-volume-inspect.png)
 
-para hacer la prueba más interesante se creó una base de datos dentro del contenedor de postgres y se le insertó un usuario a nombre de "Sebastian Valverde".
+Para realizar una prueba completa de persistencia, se creó una tabla dentro de PostgreSQL e insertó un usuario registrado como `"Sebastian Valverde"`:
 
 ```bash
 # Crear tabla de prueba
 docker compose -f docker.compose.yaml exec bd psql -U postgres -c "CREATE TABLE usuarios (id SERIAL PRIMARY KEY, nombre VARCHAR(50));"
 
-# Insertar un registro
+# Insertar un registro de prueba
 docker compose -f docker.compose.yaml exec bd psql -U postgres -c "INSERT INTO usuarios (nombre) VALUES ('Sebastian Valverde');"
-
 ```
 
 ![Verificación de tabla y usuario](imagenes/07-psql-verificacion-tabla-usuario.png)
 
-Para comprobar la persistencia debemos los contenedores existentes y volver a levantar los mismos.
+Para comprobar la persistencia, eliminamos los contenedores existentes y los volvemos a levantar:
 
 ```bash
-# Detener los contenedores
+# Detener y eliminar los contenedores
 docker compose -f docker.compose.yaml down
 
-# Verificar inexistencia de los contenedores
+# Verificar la inexistencia de contenedores activos
 docker compose -f docker.compose.yaml ps -a
 
-# Levantamos los contenedores
+# Volver a levantar la infraestructura
 docker compose -f docker.compose.yaml up -d
 ```
 
 ![Estado de contenedores con Docker Compose](imagenes/08-docker-compose-ps.png)
 
-### commit: 
+Finalmente, ejecutamos la consulta a la base de datos comprobando que el registro de `"Sebastian Valverde"` persiste:
 
+```bash
+docker compose -f docker.compose.yaml exec bd psql -U postgres -c "SELECT * FROM usuarios;"
 ```
+
+### Commit: 
+
+```text
 feat(compose): agregar volumen persistente a la bd
 ```
-
-
-

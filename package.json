@@ -1,0 +1,15 @@
+{
+  "name": "sem2-iac-sebastianvalverde",
+  "version": "1.0.0",
+  "description": "API Node.js para Sem2 IAC",
+  "main": "src/api/server.js",
+  "scripts": {
+    "start": "node src/api/server.js",
+    "dev": "node src/api/server.js"
+  },
+  "author": "Sebastian Valverde",
+  "license": "ISC",
+  "dependencies": {
+    "log4js": "^6.9.1"
+  }
+}
